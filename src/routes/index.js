@@ -9,6 +9,9 @@
 
 /* eslint-disable global-require */
 
+// import { loadAuth } from '../actions/auth';
+// import { isLoggedIn } from '../helpers';
+
 // The top-level (parent) route
 const routes = {
   path: '',
@@ -20,6 +23,38 @@ const routes = {
       load: () => import(/* webpackChunkName: 'home' */ './home'),
     },
 
+    // {
+    //   path: '/edit',
+    //   children: [
+    //     {
+    //       path: '/courses',
+    //       children: [
+    //         {
+    //           path: '/new',
+    //           load: () =>
+    //             import(/* webpackChunkName: 'courses' */ './editCourse'),
+    //         },
+    //         {
+    //           path: '/:courseId',
+    //           load: () =>
+    //             import(/* webpackChunkName: 'courses' */ './editCourse'),
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // },
+
+    // {
+    //   path: '/courses/:courseSlug',
+    //   load: () =>
+    //     import(/* webpackChunkName: 'courses' */ './courseDetails/CourseDetailsContent/index'),
+    // },
+    // {
+    //   path: '/courses/:courseSlug/cases',
+    //   load: () =>
+    //     import(/* webpackChunkName: 'courses' */ './courseDetails/CourseDetailsCases/index'),
+    // },
+
     // Wildcard routes, e.g. { path: '(.*)', ... } (must go last)
     {
       path: '(.*)',
@@ -27,7 +62,18 @@ const routes = {
     },
   ],
 
-  async action({ next }) {
+  async action({ next /* , fetch, store */ }) {
+    // await store.dispatch(loadAuth(fetch)); // request is sent both from SSR-server and client
+    // const { auth } = store.getState();
+
+    // if (isLoggedIn(auth)) {
+    //   const promises = [];
+    //   promises.push(async () => store.dispatch(loadFavoriteCourses(fetch)));
+    //   promises.push(async () => store.dispatch(loadFollowedDiscussions(fetch)));
+    //
+    //   await Promise.all(promises.map(promise => promise()));
+    // }
+
     // Execute each child route until one of them return the result
     const route = await next();
 

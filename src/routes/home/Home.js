@@ -9,6 +9,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+// import { connect } from 'react-redux';
+// import { bindActionCreators } from 'redux';
 import withStyles from 'isomorphic-style-loader/lib/withStyles';
 import { TextField } from 'redux-form-material-ui';
 import {
@@ -36,6 +38,13 @@ class Home extends React.Component {
     fetch: PropTypes.func,
   };
 
+  // componentDidMount() {
+  //   const { getNotifications, auth } = this.props;
+  //   if (isLoggedIn(auth)) {
+  //     getNotifications(); perform some request from client (without SSR) to get data after component is mounted and page is shown
+  //   }
+  // }
+
   submit = () => {
     // console.log('---data', data);
     // const { cookies } = this.props;
@@ -61,7 +70,7 @@ class Home extends React.Component {
     //     }),
     //   )
     //   .then(token => {
-    //     cookies.set('token', token.token, { path: '/' });
+    //     cookies.set('token', token.token, { path: '/' }); we save token in cookies instead of local storage for correct routing with server side server to prevent log out when user goes from one page to another
     //     history.push('/');
     //   });
   };
@@ -116,6 +125,23 @@ class Home extends React.Component {
 const createReduxForm = reduxForm({
   form: 'loginForm',
   validate,
+  // asyncValidate
+  // asyncBlurFields: ['email'],
 });
 
+// const connectRedux = connect(
+//   state => ({
+//     auth: state.auth,
+//     // initialValues: state.notifications.notifications, for edit, content should be loaded before component is mount
+//   }),
+//   // dispatch =>
+//   //   bindActionCreators( --> getNotifications will be wrapped into this.props.dispatch(this.props.getNotifications(...))
+//   //     {
+//   //       ...notificationsActions,
+//   //     },
+//   //     dispatch,
+//   //   ),
+// );
+
+// export default withCookies(connectRedux(createReduxForm(withStyles(s)(Home))));
 export default withCookies(createReduxForm(withStyles(s)(Home)));
