@@ -8,21 +8,114 @@
  */
 
 import React from 'react';
+import PropTypes from 'prop-types';
 import withStyles from 'isomorphic-style-loader/lib/withStyles';
+import { TextField } from 'redux-form-material-ui';
+import {
+  Field,
+  reduxForm,
+  // SubmissionError,
+  propTypes as reduxFormPropTypes,
+} from 'redux-form';
+import { withCookies, Cookies } from 'react-cookie';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography/Typography';
+
 import s from './Home.css';
+import validate from './validate';
+
+// import history from '../../history';
 
 class Home extends React.Component {
-  static propTypes = {};
+  static propTypes = {
+    cookies: PropTypes.instanceOf(Cookies).isRequired,
+    ...reduxFormPropTypes,
+  };
+
+  static contextTypes = {
+    fetch: PropTypes.func,
+  };
+
+  submit = () => {
+    // console.log('---data', data);
+    // const { cookies } = this.props;
+    // cookies.remove('token', { path: '/' });
+    //
+    // return this.context
+    //   .fetch('/api/auth/login', {
+    //     method: 'POST',
+    //     body: JSON.stringify(data),
+    //   })
+    //   .catch(err => {
+    //     throw new SubmissionError({ _error: err && err.message });
+    //   })
+    //   .then(res =>
+    //     res.json().then(resJson => {
+    //       if (!res.ok) {
+    //         if (resJson.message) {
+    //           throw new SubmissionError({ _error: resJson.message });
+    //         }
+    //         throw new SubmissionError(resJson);
+    //       }
+    //       return resJson;
+    //     }),
+    //   )
+    //   .then(token => {
+    //     cookies.set('token', token.token, { path: '/' });
+    //     history.push('/');
+    //   });
+  };
 
   render() {
+    const { handleSubmit, submitting, error } = this.props;
+
     return (
       <div className={s.root}>
         <div className={s.container}>
-          <h1>React.js News</h1>
+          <Typography variant="display1">Log In</Typography>
+          <form noValidate autoComplete="off">
+            <Field
+              name="email"
+              type="email"
+              placeholder="Email"
+              margin="dense"
+              component={TextField}
+              fullWidth
+            />
+            <Field
+              name="password"
+              type="password"
+              placeholder="Password"
+              margin="dense"
+              component={TextField}
+              fullWidth
+            />
+            {error && (
+              <Typography gutterBottom color="error">
+                {error}
+              </Typography>
+            )}
+            <Button
+              color="primary"
+              type="submit"
+              margin="dense"
+              size="large"
+              onClick={handleSubmit(this.submit)}
+              disabled={submitting}
+              fullWidth
+            >
+              Submit
+            </Button>
+          </form>
         </div>
       </div>
     );
   }
 }
 
-export default withStyles(s)(Home);
+const createReduxForm = reduxForm({
+  form: 'loginForm',
+  validate,
+});
+
+export default withCookies(createReduxForm(withStyles(s)(Home)));

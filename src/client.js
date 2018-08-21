@@ -13,12 +13,18 @@ import ReactDOM from 'react-dom';
 import deepForceUpdate from 'react-deep-force-update';
 import queryString from 'query-string';
 import { createPath } from 'history/PathUtils';
+import { CookiesProvider } from 'react-cookie';
+import injectTapEventPlugin from 'react-tap-event-plugin';
+import { MuiThemeProvider } from '@material-ui/core/styles';
 import App from './components/App';
 import createFetch from './createFetch';
 import configureStore from './store/configureStore';
 import history from './history';
 import { updateMeta } from './DOMUtils';
 import router from './router';
+import theme from './materialUiTheme';
+
+injectTapEventPlugin();
 
 // Global (context) variables that can be easily accessed from any React component
 // https://facebook.github.io/react/docs/context.html
@@ -47,6 +53,20 @@ let currentLocation = history.location;
 let appInstance;
 
 const scrollPositionsHistory = {};
+
+class Main extends React.Component {
+  // Remove the server-side injected CSS.
+  componentDidMount() {
+    const jssStyles = document.getElementById('jss-server-side');
+    if (jssStyles && jssStyles.parentNode) {
+      jssStyles.parentNode.removeChild(jssStyles);
+    }
+  }
+
+  render() {
+    return <App {...this.props} />;
+  }
+}
 
 // Re-render the app when window.location changes
 async function onLocationChange(location, action) {
@@ -83,7 +103,11 @@ async function onLocationChange(location, action) {
 
     const renderReactApp = isInitialRender ? ReactDOM.hydrate : ReactDOM.render;
     appInstance = renderReactApp(
-      <App context={context}>{route.component}</App>,
+      <CookiesProvider>
+        <MuiThemeProvider theme={theme}>
+          <Main context={context}>{route.component}</Main>
+        </MuiThemeProvider>
+      </CookiesProvider>,
       container,
       () => {
         if (isInitialRender) {

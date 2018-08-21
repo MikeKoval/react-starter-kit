@@ -15,6 +15,17 @@ import nodeFetch from 'node-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
 import PrettyError from 'pretty-error';
+
+import httpProxy from 'http-proxy';
+import { CookiesProvider } from 'react-cookie';
+import cookiesMiddleware from 'universal-cookie-express';
+import { SheetsRegistry } from 'react-jss/lib/jss';
+import JssProvider from 'react-jss/lib/JssProvider';
+import {
+  MuiThemeProvider,
+  createGenerateClassName,
+} from '@material-ui/core/styles';
+
 import App from './components/App';
 import Html from './components/Html';
 import { ErrorPageWithoutStyle } from './routes/error/ErrorPage';
@@ -26,6 +37,20 @@ import chunks from './chunk-manifest.json'; // eslint-disable-line import/no-unr
 import configureStore from './store/configureStore';
 import { setRuntimeVariable } from './actions/runtime';
 import config from './config';
+import theme from './materialUiTheme';
+
+const proxy = httpProxy.createProxyServer({
+  target: config.api.url,
+  secure: false,
+});
+proxy.on('proxyReq', proxyReq => {
+  if (process.env.NODE_ENV === 'production') {
+    proxyReq.setHeader(
+      'Host',
+      process.env.API_HOST || 'domain.herokuapp.com', // todo
+    );
+  }
+});
 
 process.on('unhandledRejection', (reason, p) => {
   console.error('Unhandled Rejection at:', p, 'reason:', reason);
@@ -53,8 +78,15 @@ app.set('trust proxy', config.trustProxy);
 // -----------------------------------------------------------------------------
 app.use(express.static(path.resolve(__dirname, 'public')));
 app.use(cookieParser());
+
+app.use('/api', (req, res) => {
+  proxy.web(req, res, { target: config.api.url });
+});
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use(cookiesMiddleware());
 
 //
 // Register server-side rendering middleware
@@ -62,6 +94,10 @@ app.use(bodyParser.json());
 app.get('*', async (req, res, next) => {
   try {
     const css = new Set();
+
+    const sheetsRegistry = new SheetsRegistry();
+
+    const generateClassName = createGenerateClassName();
 
     // Enables critical path CSS rendering
     // https://github.com/kriasoft/isomorphic-style-loader
@@ -113,10 +149,34 @@ app.get('*', async (req, res, next) => {
     }
 
     const data = { ...route };
+    // data.children = ReactDOM.renderToString(
+    //   <CookiesProvider>
+    //     <JssProvider
+    //       registry={sheetsRegistry}
+    //       generateClassName={generateClassName}
+    //     >
+    //       <MuiThemeProvider theme={theme} sheetsManager={new Map()}>
+    //          <App context={context}>{route.component}</App>
+    //       </MuiThemeProvider>
+    //     </JssProvider>
+    //   </CookiesProvider>,
+    // );
     data.children = ReactDOM.renderToString(
-      <App context={context}>{route.component}</App>,
+      <CookiesProvider>
+        <JssProvider
+          registry={sheetsRegistry}
+          generateClassName={generateClassName}
+        >
+          <MuiThemeProvider theme={theme} sheetsManager={new Map()}>
+            <App context={context}>{route.component}</App>
+          </MuiThemeProvider>
+        </JssProvider>
+      </CookiesProvider>,
     );
-    data.styles = [{ id: 'css', cssText: [...css].join('') }];
+    data.styles = [
+      { id: 'jss-server-side', cssText: sheetsRegistry.toString() },
+      { id: 'css', cssText: [...css].join('') },
+    ];
 
     const scripts = new Set();
     const addChunk = chunk => {
