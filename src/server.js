@@ -162,7 +162,7 @@ app.get('*', async (req, res, next) => {
     //   </CookiesProvider>,
     // );
     data.children = ReactDOM.renderToString(
-      <CookiesProvider>
+      <CookiesProvider cookies={req.universalCookies}>
         <JssProvider
           registry={sheetsRegistry}
           generateClassName={generateClassName}
